@@ -5,6 +5,9 @@ import time
 
 class BarScraper():
     def __init__(self, barName, city):
+        self.bar = barName
+        self.city = city
+
         page = 'https://www.google.com/search?q=' + barName + '+' + city
 
         # Create a headless browser
@@ -18,6 +21,10 @@ class BarScraper():
         self.times = []
         self.pixels = []
 
+        # Get and track other items
+        self.rating = ''
+        self.website = ''
+
     def getPopTimes(self):
         '''
         Query the page to populate dict of times and busyness level
@@ -27,9 +34,8 @@ class BarScraper():
         sleep(1)
 
         # Get all containers containing busyness data
-        numOfItems = self.browser.find_elements_by_class_name('iWYMkd')
-        hoursData = self.browser.find_elements_by_class_name('D6mXgd')
-        busyData = self.browser.find_elements_by_class_name('cwiwob')
+        hoursData = self.browser.find_elements_by_css_selector('div.wYzX9b')
+        busyData = self.browser.find_elements_by_css_selector('div.cwiwob')
 
         # Filter the items into a time:pixel dict
         for hour in hoursData:
@@ -41,9 +47,46 @@ class BarScraper():
             pctBusy = int((px/75)*100)
             self.pixels.append(pctBusy)
         i = 0
-        while i < len(numOfItems):
+        while i < len(hoursData):
             self.busyness[self.times[i]] = self.pixels[i]
             i += 1
 
-        self.browser.close()
         return self.busyness
+
+    def getRatings(self):
+        '''
+        Query the page to get the rating
+        '''
+
+        # Sleep to give page time to load
+        sleep(1)
+
+        # Get the ratings using XPath
+        rating = self.browser.find_elements_by_css_selector("span.Fam1ne.EBe2gf")
+        stars = rating[0].get_attribute('aria-label')
+        # Process response to get just the number of stars
+        stars = stars.split(" ")
+        stars = stars[1]
+        self.rating = stars
+
+        return self.rating
+
+    def getWebsite(self):
+        '''
+        Query the page to get the website URL
+        '''
+
+        # Sleep to give page time to load
+        sleep(1)
+
+        # Get URL using XPath
+        pages = self.browser.find_elements_by_css_selector("a.ab_button")
+        page = pages[0]
+        url = page.get_attribute('href')
+        self.website = url
+
+        return self.website
+
+    def closeBrowser(self):
+        self.browser.close()
+
