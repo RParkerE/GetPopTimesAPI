@@ -1,4 +1,4 @@
-# Get Popular Times API
+# Get Popular Times API - DEPRECATED
 
 
 ## Table Of Contents
